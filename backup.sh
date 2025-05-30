@@ -80,9 +80,8 @@ echo "Starting backup process"
 
 if [ "$(date +%u)" -eq 5 ]; then
     echo "Today is Friday, creating weekly backup"
-    
     # For each folder in $BACKUP_DIR, create a 7z archive
-    # Check folders in $BACKUP_DIR   
+    # Check folders in $BACKUP_DIR
     FOLDERS=$(find $BACKUP_DIR -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)
     if [ -z "$FOLDERS" ]; then
         echo "No folders found in $BACKUP_DIR. Skipping 7z archive creation."
@@ -91,10 +90,10 @@ if [ "$(date +%u)" -eq 5 ]; then
     echo "Folders found: $FOLDERS"
     echo "Creating 7z archives for shares in $BACKUP_DIR"
     # Ensure 7z is installed
-    if ! command -v 7z &> /dev/null; then
+    if ! command -v 7z &>/dev/null; then
         echo "7z command not found. Please install p7zip-full package."
         exit 1
-    fi    
+    fi
     for FOLDER in $FOLDERS; do
         echo "Creating 7z archive for share: $FOLDER"
         7z a -t7z -mx=9 -mmt=on $BACKUP_DIR/$FOLDER.7z $BACKUP_DIR/$FOLDER

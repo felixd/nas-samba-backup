@@ -1,2 +1,1 @@
-# nas-samba-backup
-NAS Samba Backup tool
+# NAS Samba Backup tool

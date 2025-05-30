@@ -67,6 +67,9 @@ for SHARE in $SHARES; do
         -o username="$NAS_USER",password="$NAS_PASSWORD",vers=$SMBVERSION,uid=1000,gid=1000,noperm
 done
 
+echo "All shares mounted successfully"
+echo "Starting rsync backup from $SOURCE_DIR to $BACKUP_DIR"
+
 rsync -zar --delete $SOURCE_DIR $BACKUP_DIR
 if [ $? -ne 0 ]; then
     echo "Rsync failed. Exiting."

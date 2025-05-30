@@ -36,6 +36,12 @@ source_env() {
 # Loading .env file
 source_env
 
+# Ensure 7z is installed
+if ! command -v 7z &>/dev/null; then
+    echo "7z command not found. Please install p7zip-full package."
+    exit 1
+fi
+
 if [ -d $SOURCE_DIR ]; then
     echo "Source folder: $SOURCE_DIR"
 else
@@ -89,11 +95,7 @@ if [ "$(date +%u)" -eq 5 ]; then
     fi
     echo "Folders found: $FOLDERS"
     echo "Creating 7z archives for shares in $BACKUP_DIR"
-    # Ensure 7z is installed
-    if ! command -v 7z &>/dev/null; then
-        echo "7z command not found. Please install p7zip-full package."
-        exit 1
-    fi
+
     for FOLDER in $FOLDERS; do
         echo "Creating 7z archive for share: $FOLDER"
         7z a -t7z -mx=9 -mmt=on $BACKUP_DIR/$FOLDER.7z $BACKUP_DIR/$FOLDER

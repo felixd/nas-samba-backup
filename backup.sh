@@ -70,7 +70,7 @@ done
 echo "All shares mounted successfully"
 echo "Starting rsync backup from $SOURCE_DIR to $BACKUP_DIR"
 
-rsync -zar --delete $SOURCE_DIR $BACKUP_DIR
+rsync -zar --delete $SOURCE_DIR/ $BACKUP_DIR/
 if [ $? -ne 0 ]; then
     echo "Rsync failed. Exiting."
     exit 1
@@ -85,10 +85,10 @@ if [ "$(date +%u)" -eq 5 ]; then
     # Check folders in $BACKUP_DIR   
     FOLDERS=$(find $BACKUP_DIR -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)
     if [ -z "$FOLDERS" ]; then
-        echo "No shares found in $BACKUP_DIR. Skipping 7z archive creation."
+        echo "No folders found in $BACKUP_DIR. Skipping 7z archive creation."
         exit 0
     fi
-    echo "Shares found: $FOLDERS"
+    echo "Folders found: $FOLDERS"
     echo "Creating 7z archives for shares in $BACKUP_DIR"
     # Ensure 7z is installed
     if ! command -v 7z &> /dev/null; then

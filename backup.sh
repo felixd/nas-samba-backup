@@ -50,7 +50,7 @@ fi
 if [[ "$BACKUP_DIR" != /* ]]; then
     echo "BACKUP_DIR must be an absolute path. Please update your .env file."
     exit 1
-fi 
+fi
 
 # If BACKUP_DIR ends with a slash, remove it
 if [[ "$BACKUP_DIR" == */ ]]; then
@@ -101,7 +101,7 @@ for SHARE in $SHARES; do
     echo "Mounting NAS share: $SHARE at $MOUNT_POINT"
     mkdir -p "$SOURCE_DIR/$SHARE"
     mount -t cifs "//$NAS_IP/$SHARE" "$MOUNT_POINT" \
-        -o username="$NAS_USER",password="$NAS_PASSWORD",vers=$SMBVERSION,noperm
+    -o username="$NAS_USER",password="$NAS_PASSWORD",vers=$SMBVERSION,noperm
 done
 
 echo "All shares mounted successfully"
@@ -126,7 +126,7 @@ if [ "$(date +%u)" -eq 5 ]; then
     fi
     echo "Folders found: $FOLDERS"
     echo "Creating 7z archives for shares in $BACKUP_DIR"
-
+    
     for FOLDER in $FOLDERS; do
         echo "Creating 7z archive for share: $FOLDER"
         7z a -t7z -mx=9 -mmt=on $BACKUP_DIR/$FOLDER.7z $BACKPUP_SYNC_DIR/$FOLDER

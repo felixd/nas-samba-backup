@@ -38,7 +38,7 @@ cleanup() {
     echo "$SOURCE_DIR: Unmounting all shares"
     find "$SOURCE_DIR" -type d -exec mountpoint -q {} \; -exec umount -t cifs {} \;
     echo "$SOURCE_DIR: Removing empty folders"
-    find "$SOURCE_DIR/" -type d -empty -delete --
+    find "$SOURCE_DIR/" -type d -empty -delete
 }
 trap cleanup EXIT
 

@@ -11,6 +11,7 @@
 # NAS_USER="backup"
 # NAS_PASSWORD=""
 
+set -euo pipefail
 SMBVERSION="3.0"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -31,6 +32,15 @@ source_env() {
     }
     eval $(sed -e '/^\s*$/d' -e '/^\s*#/d' -e 's/=/="/' -e 's/$/"/' -e 's/^/export /' "${env}")
 }
+
+# Cleanup function to unmount shares and remove empty directories on script exit
+cleanup() {
+    echo "$SOURCE_DIR: Unmounting all shares"
+    find "$SOURCE_DIR" -type d -exec mountpoint -q {} \; -exec umount -t cifs {} \;
+    echo "$SOURCE_DIR: Removing empty folders"
+    find "$SOURCE_DIR/" -type d -empty -delete --
+}
+trap cleanup EXIT
 
 # Loading .env file
 source_env
@@ -70,27 +80,25 @@ if ! command -v 7z &>/dev/null; then
     exit 1
 fi
 
-if [ -d $SOURCE_DIR ]; then
+if [ -d "$SOURCE_DIR" ]; then
     echo "Source folder: $SOURCE_DIR"
 else
     echo "Source folder does not exist: $SOURCE_DIR"
-    mkdir -p $SOURCE_DIR
+    mkdir -p "$SOURCE_DIR"
     echo "Created $SOURCE_DIR"
 fi
 
-if [ ! -d $BACKUP_DIR ]; then
+if [ ! -d "$BACKUP_DIR" ]; then
     echo "Destination backup folder does not exist. Creating"
-    mkdir -p $BACKUP_DIR
-    mkdir -p $BACKPUP_SYNC_DIR
+    mkdir -p "$BACKUP_DIR"
+    mkdir -p "$BACKUP_SYNC_DIR" 
     echo "Created: $BACKUP_DIR"
-    echo "Created: $BACKPUP_SYNC_DIR"
+    echo "Created: $BACKUP_SYNC_DIR "
 fi
 
-echo "$SOURCE_DIR: Unmouning all CIFS type directories"
-find $SOURCE_DIR -type d -exec mountpoint -q {} \; -exec umount -t cifs {} \;
-
-echo "$SOURCE_DIR: Removing empty folders"
-find $SOURCE_DIR/ -type d -empty -delete
+# Cleanup previous mounts
+echo "Cleaning up previous mounts in $SOURCE_DIR"
+cleanup
 
 # Get list of avaialble shares (ignore administrative shares)
 SHARES=$(smbclient -L //$NAS_IP -U "$NAS_USER%$NAS_PASSWORD" | grep "Disk" | grep -v "\\$" | awk '{print $1}')
@@ -105,9 +113,9 @@ for SHARE in $SHARES; do
 done
 
 echo "All shares mounted successfully"
-echo "Starting rsync backup from $SOURCE_DIR to $BACKPUP_SYNC_DIR"
+echo "Starting rsync backup from $SOURCE_DIR to $BACKUP_SYNC_DIR "
 
-rsync -zar --delete $SOURCE_DIR/ $BACKPUP_SYNC_DIR/
+rsync -zar --delete $SOURCE_DIR/ $BACKUP_SYNC_DIR /
 if [ $? -ne 0 ]; then
     echo "Rsync failed. Exiting."
     exit 1
@@ -117,11 +125,11 @@ echo "Starting backup process"
 
 if [ "$(date +%u)" -eq 5 ]; then
     echo "Today is Friday, creating weekly backup"
-    # For each folder (synced share) in $BACKPUP_SYNC_DIR, create a 7z archive in $BACKUP_DIR
-    # Check folders in $BACKPUP_SYNC_DIR
-    FOLDERS=$(find $BACKPUP_SYNC_DIR -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)
+    # For each folder (synced share) in $BACKUP_SYNC_DIR , create a 7z archive in $BACKUP_DIR
+    # Check folders in $BACKUP_SYNC_DIR 
+    FOLDERS=$(find $BACKUP_SYNC_DIR  -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)
     if [ -z "$FOLDERS" ]; then
-        echo "No folders found in $BACKPUP_SYNC_DIR. Skipping 7z archive creation."
+        echo "No folders found in $BACKUP_SYNC_DIR . Skipping 7z archive creation."
         exit 0
     fi
     echo "Folders found: $FOLDERS"
@@ -129,17 +137,18 @@ if [ "$(date +%u)" -eq 5 ]; then
     
     for FOLDER in $FOLDERS; do
         echo "Creating 7z archive for share: $FOLDER"
-        7z a -t7z -mx=9 -mmt=on $BACKUP_DIR/$FOLDER.7z $BACKPUP_SYNC_DIR/$FOLDER
+        7z a -t7z -mx=9 -mmt=on $BACKUP_DIR/$FOLDER.7z $BACKUP_SYNC_DIR /$FOLDER
     done
 fi
 
 echo "Backup completed successfully"
-echo "$SOURCE_DIR: Unmounting all shares"
-find $SOURCE_DIR -type d -exec mountpoint -q {} \; -exec umount -t cifs {} \;
-echo "$SOURCE_DIR: Removing empty folders"
-find $SOURCE_DIR/ -type d -empty -delete
+
 echo "Backup directory: $BACKUP_DIR"
-echo "Backup NAS directory: $BACKPUP_SYNC_DIR"
+echo "Backup NAS directory: $BACKUP_SYNC_DIR "
 echo "Source directory: $SOURCE_DIR"
 echo "Backup completed successfully"
+
+# Cleanup after backup
+cleanup
+
 echo "Backup script finished"

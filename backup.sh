@@ -124,8 +124,10 @@ for SHARE in $SHARES; do
 done
 
 echo "All shares mounted successfully"
-echo "Starting rsync backup from $SOURCE_DIR to $BACKUP_SYNC_DIR "
+ls -al "$SOURCE_DIR"
 
+# Start rsync backup from SOURCE_DIR/ to BACKUP_SYNC_DIR/
+echo "Starting rsync backup from $SOURCE_DIR/ to $BACKUP_SYNC_DIR/"
 rsync -zar --delete "$SOURCE_DIR/" "$BACKUP_SYNC_DIR/"
 if [ $? -ne 0 ]; then
     echo "Rsync failed. Exiting."

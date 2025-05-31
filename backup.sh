@@ -3,10 +3,10 @@
 # (c) 2025 - FlameIT - Immersion Cooling
 
 # Cleanup function will be called automatically on script exit
-# If you want to run this script periodically, consider using cron jobs or systemd timers.  
+# If you want to run this script periodically, consider using cron jobs or systemd timers.
 # Make sure to test the script in a safe environment before deploying it in production.
 # Good luck with your backups! :)
-# Note: This script assumes that the user running it has sudo privileges to mount and unmount shares.   
+# Note: This script assumes that the user running it has sudo privileges to mount and unmount shares.
 
 # Default .env settings
 # NAS_IP="127.0.0.1"   # NAS IP address
@@ -93,7 +93,7 @@ fi
 if [ ! -d "$BACKUP_DIR" ]; then
     echo "Destination backup folder does not exist. Creating"
     mkdir -p "$BACKUP_DIR"
-    mkdir -p "$BACKUP_SYNC_DIR" 
+    mkdir -p "$BACKUP_SYNC_DIR"
     echo "Created: $BACKUP_DIR"
     echo "Created: $BACKUP_SYNC_DIR "
 fi
@@ -135,14 +135,14 @@ echo "Rsync completed successfully"
 echo "Starting backup process"
 
 # Check if today is Friday (5th day of the week)
-# If today is Friday, create a 7z archive of the synced shares  
+# If today is Friday, create a 7z archive of the synced shares
 # and store it in the backup directory
 echo "Checking if today is Friday for weekly backup"
 
 if [ "$(date +%u)" -eq 5 ]; then
     echo "Today is Friday, creating weekly backup"
     # For each folder (synced share) in $BACKUP_SYNC_DIR , create a 7z archive in $BACKUP_DIR
-    # Check folders in $BACKUP_SYNC_DIR 
+    # Check folders in $BACKUP_SYNC_DIR
     FOLDERS=$(find "$BACKUP_SYNC_DIR"  -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)
     if [ -z "$FOLDERS" ]; then
         echo "No folders found in $BACKUP_SYNC_DIR . Skipping 7z archive creation."
@@ -153,7 +153,7 @@ if [ "$(date +%u)" -eq 5 ]; then
             echo "Creating 7z archive for share: $FOLDER"
             7z a -t7z -mx=9 -mmt=on "$BACKUP_DIR/$FOLDER.7z" "$BACKUP_SYNC_DIR/$FOLDER"
         done
-    fi 
+    fi
 fi
 
 echo "Backup completed successfully"

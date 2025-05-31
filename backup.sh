@@ -109,7 +109,7 @@ for SHARE in $SHARES; do
     echo "Mounting NAS share: $SHARE at $MOUNT_POINT"
     mkdir -p "$SOURCE_DIR/$SHARE"
     mount -t cifs "//$NAS_IP/$SHARE" "$MOUNT_POINT" \
-    -o username="$NAS_USER",password="$NAS_PASSWORD",vers=$SMBVERSION,noperm
+    -o username="$NAS_USER",password="$NAS_PASSWORD",uid=$USER,gid=$USER,vers=$SMBVERSION,noperm
 done
 
 echo "All shares mounted successfully"

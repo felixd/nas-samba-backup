@@ -36,7 +36,7 @@ source_env() {
 # Cleanup function to unmount shares and remove empty directories on script exit
 cleanup() {
     echo "$SOURCE_DIR: Unmounting all shares"
-    find "$SOURCE_DIR" -type d -exec mountpoint -q {} \; -exec umount -t cifs {} \;
+    find "$SOURCE_DIR" -type d -exec mountpoint -q {} \; -exec sudo umount -t cifs {} \;
     echo "$SOURCE_DIR: Removing empty folders"
     find "$SOURCE_DIR/" -type d -empty -delete
 }
@@ -115,7 +115,7 @@ done
 echo "All shares mounted successfully"
 echo "Starting rsync backup from $SOURCE_DIR to $BACKUP_SYNC_DIR "
 
-rsync -zar --delete $SOURCE_DIR/ $BACKUP_SYNC_DIR /
+rsync -zar --delete "$SOURCE_DIR/" "$BACKUP_SYNC_DIR/"
 if [ $? -ne 0 ]; then
     echo "Rsync failed. Exiting."
     exit 1

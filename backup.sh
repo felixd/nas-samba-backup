@@ -74,7 +74,12 @@ BACKUP_SYNC_DIR="$BACKUP_DIR/sync"
 # Ensure 7z is installed
 if ! command -v 7z &>/dev/null; then
     echo "7z command not found. Please install 7zip package."
-    exit 1
+    echo "On Debian/Ubuntu, you can install it with: sudo apt install 7zip"
+    sudo apt install -y 7zip
+    if [ $? -ne 0 ]; then
+        echo "Failed to install 7zip. Exiting."
+        exit 1
+    fi
 fi
 
 if [ -d "$SOURCE_DIR" ]; then

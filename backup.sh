@@ -11,7 +11,7 @@
 # NAS_USER="backup"
 # NAS_PASSWORD=""
 
-set -euo pipefail
+# set -euo pipefail
 SMBVERSION="3.0"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -108,7 +108,7 @@ for SHARE in $SHARES; do
     MOUNT_POINT="$SOURCE_DIR/$SHARE"
     echo "Mounting NAS share: $SHARE at $MOUNT_POINT"
     mkdir -p "$SOURCE_DIR/$SHARE"
-    mount -t cifs "//$NAS_IP/$SHARE" "$MOUNT_POINT" \
+    sudo mount -t cifs "//$NAS_IP/$SHARE" "$MOUNT_POINT" \
     -o username="$NAS_USER",password="$NAS_PASSWORD",uid=$USER,gid=$USER,vers=$SMBVERSION,noperm
 done
 

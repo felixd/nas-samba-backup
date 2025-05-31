@@ -35,7 +35,34 @@ source_env() {
 # Loading .env file
 source_env
 
-BACKUP_NAS_DIR="$BACKUP_DIR/nas"
+# Check if required variables are set
+if [ -z "$NAS_IP" ] || [ -z "$SOURCE_DIR" ] || [ -z "$BACKUP_DIR" ] || [ -z "$NAS_USER" ] || [ -z "$NAS_PASSWORD" ]; then
+    echo "One or more required variables are not set in the .env file."
+    echo "Please ensure NAS_IP, SOURCE_DIR, BACKUP_DIR, NAS_USER, and NAS_PASSWORD are set."
+    exit 1
+fi
+# Check if the source directory is an absolute path
+if [[ "$SOURCE_DIR" != /* ]]; then
+    echo "SOURCE_DIR must be an absolute path. Please update your .env file."
+    exit 1
+fi
+# Check if the backup directory is an absolute path
+if [[ "$BACKUP_DIR" != /* ]]; then
+    echo "BACKUP_DIR must be an absolute path. Please update your .env file."
+    exit 1
+fi 
+
+# If BACKUP_DIR ends with a slash, remove it
+if [[ "$BACKUP_DIR" == */ ]]; then
+    BACKUP_DIR="${BACKUP_DIR%/}"  # Remove trailing slash if it exists
+fi
+# If SOURCE_DIR ends with a slash, remove it
+if [[ "$SOURCE_DIR" == */ ]]; then
+    SOURCE_DIR="${SOURCE_DIR%/}"  # Remove trailing slash if it exists
+fi
+
+# Define backup sync directory if it does not exist
+BACKUP_SYNC_DIR="$BACKUP_DIR/sync"
 
 # Ensure 7z is installed
 if ! command -v 7z &>/dev/null; then
@@ -54,8 +81,9 @@ fi
 if [ ! -d $BACKUP_DIR ]; then
     echo "Destination backup folder does not exist. Creating"
     mkdir -p $BACKUP_DIR
-    mkdir -p $BACKUP_NAS_DIR
-    echo "Created $BACKUP_DIR and $BACKUP_NAS_DIR"
+    mkdir -p $BACKPUP_SYNC_DIR
+    echo "Created: $BACKUP_DIR"
+    echo "Created: $BACKPUP_SYNC_DIR"
 fi
 
 echo "$SOURCE_DIR: Unmouning all CIFS type directories"
@@ -77,9 +105,9 @@ for SHARE in $SHARES; do
 done
 
 echo "All shares mounted successfully"
-echo "Starting rsync backup from $SOURCE_DIR to $BACKUP_NAS_DIR"
+echo "Starting rsync backup from $SOURCE_DIR to $BACKPUP_SYNC_DIR"
 
-rsync -zar --delete $SOURCE_DIR/ $BACKUP_NAS_DIR/
+rsync -zar --delete $SOURCE_DIR/ $BACKPUP_SYNC_DIR/
 if [ $? -ne 0 ]; then
     echo "Rsync failed. Exiting."
     exit 1
@@ -89,11 +117,11 @@ echo "Starting backup process"
 
 if [ "$(date +%u)" -eq 5 ]; then
     echo "Today is Friday, creating weekly backup"
-    # For each folder (synced share) in $BACKUP_NAS_DIR, create a 7z archive in $BACKUP_DIR
-    # Check folders in $BACKUP_NAS_DIR
-    FOLDERS=$(find $BACKUP_NAS_DIR -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)
+    # For each folder (synced share) in $BACKPUP_SYNC_DIR, create a 7z archive in $BACKUP_DIR
+    # Check folders in $BACKPUP_SYNC_DIR
+    FOLDERS=$(find $BACKPUP_SYNC_DIR -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)
     if [ -z "$FOLDERS" ]; then
-        echo "No folders found in $BACKUP_NAS_DIR. Skipping 7z archive creation."
+        echo "No folders found in $BACKPUP_SYNC_DIR. Skipping 7z archive creation."
         exit 0
     fi
     echo "Folders found: $FOLDERS"
@@ -101,17 +129,17 @@ if [ "$(date +%u)" -eq 5 ]; then
 
     for FOLDER in $FOLDERS; do
         echo "Creating 7z archive for share: $FOLDER"
-        7z a -t7z -mx=9 -mmt=on $BACKUP_DIR/$FOLDER.7z $BACKUP_NAS_DIR/$FOLDER
+        7z a -t7z -mx=9 -mmt=on $BACKUP_DIR/$FOLDER.7z $BACKPUP_SYNC_DIR/$FOLDER
     done
 fi
 
 echo "Backup completed successfully"
-echo "Unmounting all shares"
+echo "$SOURCE_DIR: Unmounting all shares"
 find $SOURCE_DIR -type d -exec mountpoint -q {} \; -exec umount -t cifs {} \;
-echo "Removing empty folders"
+echo "$SOURCE_DIR: Removing empty folders"
 find $SOURCE_DIR/ -type d -empty -delete
 echo "Backup directory: $BACKUP_DIR"
-echo "Backup NAS directory: $BACKUP_NAS_DIR"
+echo "Backup NAS directory: $BACKPUP_SYNC_DIR"
 echo "NAS source directory: $SOURCE_DIR"
 echo "Backup completed successfully"
 echo "Backup script finished"

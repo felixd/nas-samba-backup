@@ -7,6 +7,7 @@
 # Make sure to test the script in a safe environment before deploying it in production.
 # Good luck with your backups! :)
 # Note: This script assumes that the user running it has sudo privileges to mount and unmount shares.
+# Note: Weekly backups older than 30 days are removed.
 
 # Default .env settings
 # NAS_IP="127.0.0.1"   # NAS IP address
@@ -14,6 +15,7 @@
 # SOURCE_DIR="/mnt/source"
 # Backup directory
 # BACKUP_DIR="/mnt/backup"
+# BACKUP_DIR_WEEKLY="/mnt/backup-weekly"
 # NAS_USER="backup"
 # NAS_PASSWORD=""
 
@@ -30,6 +32,7 @@ source_env() {
         echo "NAS_IP=127.0.0.1"
         echo "SOURCE_DIR=/mnt/source"
         echo "BACKUP_DIR=/mnt/backup"
+        echo "BACKUP_DIR_WEEKLY=/mnt/backup-weekly"
         echo "NAS_USER=backup"
         echo "NAS_PASSWORD=your_password"
         echo "SMBVERSION=3.0"
@@ -58,10 +61,19 @@ if [[ "$BACKUP_DIR" != /* ]]; then
     echo "BACKUP_DIR must be an absolute path. Please update your .env file."
     exit 1
 fi
+# Check if the backup directory is an absolute path
+if [[ "$BACKUP_DIR_WEEKLY" != /* ]]; then
+    echo "BACKUP_DIR_WEEKLY must be an absolute path. Please update your .env file."
+    exit 1
+fi
 
 # If BACKUP_DIR ends with a slash, remove it
 if [[ "$BACKUP_DIR" == */ ]]; then
     BACKUP_DIR="${BACKUP_DIR%/}"  # Remove trailing slash if it exists
+fi
+# If BACKUP_DIR_WEEKLY ends with a slash, remove it
+if [[ "$BACKUP_DIR_WEEKLY" == */ ]]; then
+    BACKUP_DIR_WEEKLY="${BACKUP_DIR_WEEKLY%/}"  # Remove trailing slash if it exists
 fi
 # If SOURCE_DIR ends with a slash, remove it
 if [[ "$SOURCE_DIR" == */ ]]; then
@@ -143,6 +155,15 @@ echo "Checking if today is Friday for weekly backup"
 
 if [ "$(date +%u)" -eq 5 ]; then
     echo "Today is Friday, creating weekly backup"
+    if [ -n "$BACKUP_DIR_WEEKLY" ] && [ -d "$BACKUP_DIR_WEEKLY" ]; then
+        # Move old weekly backups to $BACKUP_DIR_WEEKLY
+        find "$BACKUP_DIR" -mindepth 1 -maxdepth 1 -type f -name '*.7z' -mtime +5 -exec mv {} "$BACKUP_DIR_WEEKLY/" \;
+        echo "$BACKUP_DIR: Old weekly backups moved to $BACKUP_DIR_WEEKLY"
+        # Remove backups older than 30 days
+        echo "Remov
+        find "$BACKUP_DIR_WEEKLY/" -mindepth 1 -maxdepth 1 -type f -name '*.7z' -mtime +30 -exec rm {} \;
+        echo "$BACKUP_DIR_WEEKLY: Weekly backups older than 30 days have been removed"
+    fi
     # For each folder (synced share) in $BACKUP_SYNC_DIR , create a 7z archive in $BACKUP_DIR
     # Check folders in $BACKUP_SYNC_DIR
     FOLDERS=$(find "$BACKUP_SYNC_DIR"  -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)

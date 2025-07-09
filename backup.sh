@@ -157,7 +157,7 @@ if [ "$(date +%u)" -eq 5 ]; then
     echo "Today is Friday, creating weekly backup"
     if [ -n "$BACKUP_DIR_WEEKLY" ] && [ -d "$BACKUP_DIR_WEEKLY" ]; then
         # Move old weekly backups to $BACKUP_DIR_WEEKLY
-        find "$BACKUP_DIR" -mindepth 1 -maxdepth 1 -type f -name '*.7z' -mtime +5 -exec mv {} "$BACKUP_DIR_WEEKLY/" \;
+        find "$BACKUP_DIR/" -mindepth 1 -maxdepth 1 -type f -name '*.7z' -mtime +3 -exec mv {} "$BACKUP_DIR_WEEKLY/" \;
         echo "$BACKUP_DIR: Old weekly backups moved to $BACKUP_DIR_WEEKLY"
         # Remove backups older than 30 days
         echo "Removing weekly backups older than 30 days."

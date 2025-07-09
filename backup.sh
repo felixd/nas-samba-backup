@@ -160,7 +160,7 @@ if [ "$(date +%u)" -eq 5 ]; then
         find "$BACKUP_DIR" -mindepth 1 -maxdepth 1 -type f -name '*.7z' -mtime +5 -exec mv {} "$BACKUP_DIR_WEEKLY/" \;
         echo "$BACKUP_DIR: Old weekly backups moved to $BACKUP_DIR_WEEKLY"
         # Remove backups older than 30 days
-        echo "Remov
+        echo "Removing weekly backups older than 30 days."
         find "$BACKUP_DIR_WEEKLY/" -mindepth 1 -maxdepth 1 -type f -name '*.7z' -mtime +30 -exec rm {} \;
         echo "$BACKUP_DIR_WEEKLY: Weekly backups older than 30 days have been removed"
     fi

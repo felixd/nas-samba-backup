@@ -143,11 +143,18 @@ ls -al "$SOURCE_DIR"
 
 echo "Starting rsync backup from $SOURCE_DIR/ to $BACKUP_SYNC_DIR/"
 rsync -zar --delete --exclude='.recycle/' "$SOURCE_DIR/" "$BACKUP_SYNC_DIR/"
-if [ $? -ne 0 ]; then
-    echo "Rsync failed. Exiting."
-    exit 1
+RSYNC_EXIT_CODE=$?
+if [ $RSYNC_EXIT_CODE -ne 0 ]; then
+    if [ $RSYNC_EXIT_CODE -eq 23 ]; then
+        echo "Rsync finished with error 23 (some files/attributes were not transferred). Continuing."
+    else
+        echo "Rsync failed with exit code $RSYNC_EXIT_CODE. Exiting."
+        exit 1
+    fi
+else
+    echo "Rsync completed successfully"
 fi
-echo "Rsync completed successfully"
+
 echo "Starting backup process"
 
 # Check if today is Friday (5th day of the week)
